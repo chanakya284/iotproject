@@ -1,4 +1,3 @@
-//version 5
 #include <aJSON.h>
 
 #include <Time.h>
@@ -203,7 +202,7 @@ void loop() {
                  Serial.println(gRowKey);
                  Serial.println(gCalibrationAlertIntervalInMonths);
                  Serial.println(gDevicePollingTimeInSeconds);
-                 Serial.println( gUpgradeAlertIntervalInYears);
+                 Serial.println(gUpgradeAlertIntervalInYears);
 
 
                 
@@ -227,6 +226,103 @@ void loop() {
            Alarm.timerRepeat(gDevicePollingTimeInSeconds.toInt(), sendToIoTHub);
           ESP.restart();
      }
+ 
+ 
+ //taking date details from device 
+ 
+      Serial.println(" Serial data for the time alerts");
+
+     Serial.println("Enter Serial data");
+         String colibriData = Serial.readString();
+        Serial.println(colibriData);
+        //delay(5000);
+        char a[700];
+               colibriData.toCharArray(a,700);
+                aJsonObject* jsonObject = aJson.parse(a);
+                
+                String  gstrMfgDt;
+                String gstrLastCalibDate;
+                   aJsonObject* strMfgDt = aJson.getObjectItem(jsonObject, "strMfgDt");
+                 gstrMfgDt=strMfgDt->valuestring;
+
+                  aJsonObject* strLastCalibDate = aJson.getObjectItem(jsonObject, "strLastCalibDate");
+                 gstrLastCalibDate=strLastCalibDate->valuestring;
+
+                 Serial.println(gstrMfgDt);
+               // 01-01-2016
+                Serial.println(gstrLastCalibDate);
+              // 01-01-2017
+              // 0123456789
+
+                
+                // Extracting date and storing in variables 
+                int cday, cmonth, cyear, mday ,mmonth, myear;
+                
+cday = gstrLastCalibDate.substring(0,2).toInt();
+cmonth = gstrLastCalibDate.substring(3,5).toInt();
+cyear = gstrLastCalibDate.substring(6,10).toInt();
+ 
+   Serial.println(cday);
+   Serial.println(cmonth);
+   Serial.println(cyear);
+   
+   mday = gstrMfgDt.substring(0,2).toInt();
+mmonth = gstrMfgDt.substring(3,5).toInt();
+myear = gstrMfgDt.substring(6,10).toInt();
+ 
+   Serial.println(mday);
+   Serial.println(mmonth);
+   Serial.println(myear);
+
+   int currentyear=year();
+ int currentmonth=month();
+ 
+// Upgrade Alert code 
+ 
+ if(  currentyear-myear == gUpgradeAlertIntervalInYears.toInt())
+ {
+ Serial.println("Device needs to be upgraded ");
+  
+  // then check if no record exists in the Upgrade table only then put record
+  
+ }
+
+ else
+ {
+  Serial.println("Device needn't get upgraded");
+ }
+
+
+
+//Calibration Alert code 
+
+
+   int currentlytotalmonths=(currentyear-1)*12+currentmonth;
+   int serialtotalmonths=(cyear-1)*12+cmonth;
+  if(  currentlytotalmonths - serialtotalmonths  == gCalibrationAlertIntervalInMonths.toInt())
+ {
+ Serial.println("Device needs to be recalibrated ");
+  
+  // then check if no record exists in the Upgrade table only then put record
+  
+ }
+
+ else
+ {
+  Serial.println("Device needn't get recalibrated");
+ }
+
+
+
+
+  
+   
+   
+   
+                
+
+
+                 
 
      
    
@@ -260,8 +356,9 @@ void sendToIoTHub()
 
      if(gMode.toInt() == 1)
       {
-
-         Serial.println("In mode 1 and hence sending any data according to poll time");
+      
+           Serial.println("In mode 1 and hence sending any data according to poll time");
+            delay(3000);
           Serial.println(hub.send(sensor.toJSON()));
       }
   else if(gMode.toInt() == 2)
